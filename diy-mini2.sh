@@ -132,9 +132,18 @@ cp -f $GITHUB_WORKSPACE/configfiles/dts/rk3568-nsy-g68-plus.dts target/linux/roc
 cp -f $GITHUB_WORKSPACE/configfiles/dts/rk3568-nsy-g16-plus.dts target/linux/rockchip/files/arch/arm64/boot/dts/rockchip/rk3568-nsy-g16-plus.dts
 cp -f $GITHUB_WORKSPACE/configfiles/dts/rk3568-bdy-g18-pro.dts target/linux/rockchip/files/arch/arm64/boot/dts/rockchip/rk3568-bdy-g18-pro.dts
 
+# 下载内核配置文件
+wget -O target/linux/rockchip/armv8/config-6.6 \
+https://raw.githubusercontent.com/unifreq/arm64-kernel-configs/main/config-6.12.18-flippy-93%2B(enable%20ebpf)
+
+# 编译内核添加 rtl8365mb 模块
+cp -f $GITHUB_WORKSPACE/configfiles/target/armv8.mk target/linux/rockchip/image/armv8.mk
+# 修改交换机配置
+cp -f $GITHUB_WORKSPACE/configfiles/target/02_network target/linux/rockchip/armv8/base-files/etc/board.d/02_network
+
 # 电工大佬的rtl8367b驱动资源包，暂时使用这样替换
-wget https://github.com/xiaomeng9597/files/releases/download/files/rtl8367b.tar.gz
-tar -xvf rtl8367b.tar.gz
+# wget https://github.com/xiaomeng9597/files/releases/download/files/rtl8367b.tar.gz
+# tar -xvf rtl8367b.tar.gz
 
 # openwrt主线rtl8367b驱动资源包，暂时使用这样替换
 # wget https://github.com/xiaomeng9597/files/releases/download/files/rtl8367b-openwrt.tar.gz

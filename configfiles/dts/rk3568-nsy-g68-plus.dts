@@ -7,11 +7,9 @@
 #include <dt-bindings/leds/common.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pinctrl/rockchip.h>
-#ifdef DTS_NO_LEGACY
+
 #include <dt-bindings/soc/rockchip,vop2.h>
-#else
-#include <dt-bindings/display/rockchip_vop.h>
-#endif
+
 #include "rk3568.dtsi"
 
 / {
@@ -271,46 +269,6 @@
 		#clock-cells = <0>;
 	};
 
-	//待修复
-	/*
-	rtl8367s: rtlgsw@0 {
-		compatible = "realtek,rtl8365mb";
-		pinctrl-names = "default";
-		pinctrl-0 = <&gmac0_reset>;
-		reset-assert-us = <20000>;
-		reset-deassert-us = <100000>;
-		reset-gpios = <&gpio1 RK_PB0 GPIO_ACTIVE_LOW>;
-		realtek,smi-mdio = <&mdio0>;
-		realtek,id = <0>;
-		status = "okay";
-	};*/
-	//暂时试着das驱动模型
-
-	//主线openwrt传统非DSA驱动模型,需要手动打驱动,已打驱动后使用
-	rtlgsw@0 {
-		compatible = "realtek,rtl8367b", "realtek,rtl8367s";
-		realtek,mdio = <&mdio0>;
-		mii-bus = <&mdio0>;
-		realtek,id = <29>;
-		phy-id = <29>;
-		cpu_port = <7>;
-
-		//======================================================
-		//对于主线op的设备树书写方式
-		//realtek,extif = <7 0 0 1 1 1 1 1 1 2>;
-		//======================================================
-
-		//延迟为0,否则网络很卡
-		//realtek,extif = <7 0 0 1 1 1 1 1 1 2>;
-		//realtek,extif1 = <7 0 0 1 1 1 1 1 1 2>;
-		//txdelay, rxdelay, mode, ability.force_mode, ability.txpause, ability.rxpause, ability.link, ability.duplex, speed
-
-		//sgmii,
-		realtek,extif1 = <0 0 11 1 1 1 1 1 2>;
-		//rgmii
-		realtek,extif2 = <0 0 1 1 1 1 1 1 2>;
-		status = "okay";
-	};
 
 	adc_keys: adc-keys {
 		compatible = "adc-keys";
@@ -755,29 +713,178 @@
 
 &mdio0 {
 	status = "okay";
-};
+	};
+
+&mdio0 {
+	compatible = "snps,dwmac-mdio";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	switch0: switch0@29 {
+		compatible = "realtek,rtl8365mb";
+		reg = <29>;
+		reset-gpios = <&gpio1 RK_PB0 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default";
+			reset-assert-us = <20000>;
+			reset-deassert-us = <100000>;
+			pinctrl-0 = <&gmac0_reset>;
+
+
+		realtek,led_active_low;
+
+		//mode: off link_act link_tx link_rx
+		realtek,led_group_0 = "spd_1000";
+		realtek,led_group_1 = "link_tx";
+		
+			#address-cells = <1>;
+			#size-cells = <0>;
+			// 这是中断配置
+			switch_intc: interrupt-controller {
+				interrupt-parent = <&gpio3>;
+				interrupts = <RK_PC0 IRQ_TYPE_LEVEL_LOW>; // 暂时保留您的中断配置，但请根据 SoC 文档进行验证
+            			interrupt-controller;
+            			#address-cells = <0>;
+				#interrupt-cells = <1>;
+			};
+
+			mdio_phys: mdio {
+				compatible = "realtek,smi-mdio";
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				mdio_phy0: mdio-phy@0 {
+					reg = <0>;
+				};
+
+				mdio_phy1: mdio-phy@1 {
+					reg = <1>;
+				};
+
+				mdio_phy2: mdio-phy@2 {
+					reg = <2>;
+				};
+
+				mdio_phy3: mdio-phy@3 {
+					reg = <3>;
+				};
+
+				mdio_phy4: mdio-phy@4 {
+					reg = <4>;
+				};
+			};
+
+			mdio_ports: ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				port0: port@0 {
+					reg = <0>;
+					label = "lan1";
+					phy-handle = <&mdio_phy0>;
+				};
+
+				port1: port@1 {
+					reg = <1>;
+					label = "lan2";
+					phy-handle = <&mdio_phy1>;
+				};
+
+				port2: port@2 {
+					reg = <2>;
+					label = "lan3";
+					phy-handle = <&mdio_phy2>;
+				};
+
+				port3: port@3 {
+					reg = <3>;
+					label = "lan4";
+					phy-handle = <&mdio_phy3>;
+				};
+
+				port4: port@4 {
+					reg = <4>;
+					label = "wan";
+					phy-handle = <&mdio_phy4>;
+				};
+
+			// rtl8365mb.c 源码内容
+			///drivers/net/dsa/realtek/rtl8365mb.c
+			//.name = "RTL8367S",
+			//.chip_id = 0x6367,
+			//.chip_ver = 0x00A0,
+			//.extints = {
+			//	{ 6, 1, PHY_INTF(SGMII) | PHY_INTF(HSGMII) },
+			//	{ 7, 2, PHY_INTF(MII) | PHY_INTF(TMII) |
+			//		PHY_INTF(RMII) | PHY_INTF(RGMII) },
+			//	},
+
+				port6: port@6 {
+					reg = <6>;
+					label = "cpu_sgmii";
+					ethernet = <&gmac1>;
+					phy-mode = "sgmii";
+
+
+					fixed-link {
+						speed = <1000>;
+						full-duplex;
+						pause;
+					};	
+
+				};
+
+				port7: port@7 {
+					reg = <7>;
+					label = "cpu_rgmii";
+					ethernet = <&gmac0>;
+					phy-mode = "rgmii";
+					tx-internal-delay-ps = <0>;
+					rx-internal-delay-ps = <0>;
+
+					fixed-link {
+						speed = <1000>;
+						full-duplex;
+						pause;
+					};
+
+				};
+			};
+		};
+	};
+
 
 &gmac0 {
 	status = "okay";
 	phy-mode = "rgmii";
+	label = "eth0";
 	clock_in_out = "output";
+	// reset gpio 写到交换机配置里面
+	#if 0
 	snps,reset-gpio = <&gpio1 RK_PB0 GPIO_ACTIVE_LOW>;
 	snps,reset-active-low;
 	snps,reset-delays-us = <0 20000 100000>;
-	assigned-clocks = <&cru SCLK_GMAC0_RX_TX &cru SCLK_GMAC0>;
-	assigned-clock-parents = <&cru SCLK_GMAC0_RGMII_SPEED &cru CLK_MAC0_2TOP>;
-	assigned-clock-rates = <0 125000000>;
+	#endif
+	assigned-clocks = <&cru SCLK_GMAC0_RX_TX>, <&cru SCLK_GMAC0>;
+	assigned-clock-parents = <&cru SCLK_GMAC0_RGMII_SPEED &cru CLK_MAC0_2TOP>;//原配置，注释掉换下面的可以识别
+	//assigned-clock-parents = <&gmac0_xpcsclk>;
+	assigned-clock-rates = <0>, <125000000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&gmac0_miim
+		     &gmac0_tx_bus2
+		     &gmac0_rx_bus2
+		     &gmac0_rgmii_clk
+		     &gmac0_rgmii_bus>; //delete &gmac0_reset 
 	tx_delay = <0x3c>;
 	rx_delay = <0x2f>;
-	clock_in_out = "output";
-	pinctrl-names = "default";
-	pinctrl-0 = <&gmac0_miim &gmac0_tx_bus2 &gmac0_rx_bus2 &gmac0_rgmii_clk &gmac0_rgmii_bus &gmac0_reset>;
+	
 	fixed-link {
 		speed = <1000>;
 		full-duplex;
 		pause;
 	};
 };
+
+
 
 &mdio1 {
 	status = "okay";
@@ -789,21 +896,33 @@
 	status = "okay";
 };
 
+&xpcs {
+status = "okay";
+};
+
 // form lintel,使能,sgmii 千兆.
 &gmac1 {
-	status = "disabled";
+	status = "okay";
 	phy-mode = "sgmii";
+	label = "eth1";
+	clock_in_out = "output";
 	rockchip,pipegrf = <&pipegrf>;
-	//不用reset
-	//snps,reset-gpio = <&gpio2 RK_PC2 GPIO_ACTIVE_LOW>;
-	//snps,reset-active-low;
-	//snps,reset-delays-us = <0 20000 100000>;
+	rockchip,xpcs = <&xpcs>;
+	#if 0
+	snps,reset-gpio = <&gpio2 RK_PC2 GPIO_ACTIVE_LOW>;
+	snps,reset-active-low;
+	snps,reset-delays-us = <0 20000 100000>;
+	#endif
 	assigned-clocks = <&cru SCLK_GMAC1_RX_TX>;
 	assigned-clock-parents = <&gmac1_xpcsclk>;
+
 	pinctrl-names = "default";
 	pinctrl-0 = <&gmac1m1_miim>;
 	power-domains = <&power RK3568_PD_PIPE>;
 	phys = <&combphy1 PHY_TYPE_SGMII>;
+
+	tx_delay = <0x3c>;
+	rx_delay = <0x2f>;
 
 	fixed-link {
 		speed = <1000>;
