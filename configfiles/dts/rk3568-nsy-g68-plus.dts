@@ -293,7 +293,7 @@
 	};
 
 	rtlgsw@0 {
-		compatible = "realtek,rtl8367s";
+		compatible = "realtek,rtl8367b", "realtek,rtl8367s";
 		realtek,mdio = <&mdio0>;
 		mii-bus = <&mdio0>;
 		realtek,id = <29>;
