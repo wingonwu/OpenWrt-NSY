@@ -204,8 +204,8 @@ tar -xvf rtl8367b.tar.gz
 echo 打上 SGMII 补丁
 # cp -f $GITHUB_WORKSPACE/scripts/9999-add-mode-gmac-number.patch target/linux/rockchip/patches-6.6/9999-add-mode-gmac-number.patch
 # cp -f $GITHUB_WORKSPACE/scripts/9999-drivers-net-ethernet-stmicro-stmmac-rockchip.patch target/linux/rockchip/patches-6.6/9999-drivers-net-ethernet-stmicro-stmmac-rockchip.patch
-cp -f $GITHUB_WORKSPACE/scripts/9999-ethernet-stmmac-dwmac-rk-Disable-Auto-Nego-for-1000.patch target/linux/rockchip/patches-6.6/9999-ethernet-stmmac-dwmac-rk-Disable-Auto-Nego-for-1000.patch
-file target/linux/rockchip/patches-6.6/9999-ethernet-stmmac-dwmac-rk-Disable-Auto-Nego-for-1000.patch
+cp -f $GITHUB_WORKSPACE/scripts/9999-ethernet-stmmac-dwmac-rk-Disable-Auto-Nego-for-1000.patch target/linux/rockchip/patches-6.6/113-01-ethernet-stmmac-dwmac-rk-Disable-Auto-Nego-for-1000.patch
+file target/linux/rockchip/patches-6.6/113-01-ethernet-stmmac-dwmac-rk-Disable-Auto-Nego-for-1000.patch
 echo 打 SGMII 补丁结束 
 
 # 定时限速插件
